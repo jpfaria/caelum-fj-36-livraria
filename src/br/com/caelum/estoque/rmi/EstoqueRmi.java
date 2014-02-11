@@ -1,4 +1,4 @@
-package br.com.caelum.livraria.rmi;
+package br.com.caelum.estoque.rmi;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
