@@ -2,6 +2,10 @@ package br.com.caelum.livraria.modelo;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.net.MalformedURLException;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.LinkedHashSet;
@@ -14,6 +18,8 @@ import org.springframework.stereotype.Component;
 
 import br.com.caelum.livraria.jms.EnviadorMensagemJms;
 import br.com.caelum.livraria.rest.ClienteRest;
+import br.com.caelum.livraria.rmi.EstoqueRmi;
+import br.com.caelum.livraria.rmi.ItemEstoque;
 
 @Component
 @Scope("session")
@@ -32,8 +38,8 @@ public class Carrinho implements Serializable {
 	@Autowired
 	EnviadorMensagemJms enviador;
 
-
-	public void adicionarOuIncremantarQuantidadeDoItem(Livro livro, Formato formato) {
+	public void adicionarOuIncremantarQuantidadeDoItem(Livro livro,
+			Formato formato) {
 
 		ItemCompra item = new ItemCompra(livro, formato);
 
@@ -69,13 +75,13 @@ public class Carrinho implements Serializable {
 		transacao.setValor(this.getTotal());
 
 		this.pagamento = this.clienteRest.criarPagamento(transacao);
-		
+
 		return this.pagamento;
 	}
 
 	private void cancelarPagamento() {
 		this.pagamento = null;
-		//poderia ter chamada do WS para cancelar o pagamento
+		// poderia ter chamada do WS para cancelar o pagamento
 	}
 
 	public Pedido finalizarPedido() {
@@ -96,7 +102,7 @@ public class Carrinho implements Serializable {
 	public void atualizarFrete(final String novoCepDestino) {
 		this.cepDestino = novoCepDestino;
 
-		//servico web do correios aqui
+		// servico web do correios aqui
 	}
 
 	public String getCepDestino() {
@@ -127,7 +133,8 @@ public class Carrinho implements Serializable {
 	}
 
 	public boolean isFreteCalculado() {
-		return !this.valorFrete.equals(BigDecimal.ZERO) || !this.isComLivrosImpressos();
+		return !this.valorFrete.equals(BigDecimal.ZERO)
+				|| !this.isComLivrosImpressos();
 	}
 
 	public boolean isPagamentoCriado() {
@@ -151,17 +158,19 @@ public class Carrinho implements Serializable {
 		return false;
 	}
 
-//	private void atualizarQuantidadeDisponivelDoItemCompra(final ItemEstoque itemEstoque) {
-//		ItemCompra item = Iterables.find(this.itensDeCompra, new Predicate<ItemCompra>() {
-//
-//			@Override
-//			public boolean apply(ItemCompra item) {
-//				return item.temCodigo(itemEstoque.getCodigo());
-//			}
-//		});
-//
-//		item.setQuantidadeNoEstoque(itemEstoque.getQuantidade());
-//	}
+	// private void atualizarQuantidadeDisponivelDoItemCompra(final ItemEstoque
+	// itemEstoque) {
+	// ItemCompra item = Iterables.find(this.itensDeCompra, new
+	// Predicate<ItemCompra>() {
+	//
+	// @Override
+	// public boolean apply(ItemCompra item) {
+	// return item.temCodigo(itemEstoque.getCodigo());
+	// }
+	// });
+	//
+	// item.setQuantidadeNoEstoque(itemEstoque.getQuantidade());
+	// }
 
 	private void limparCarrinho() {
 		this.itensDeCompra = new LinkedHashSet<>();
@@ -184,7 +193,8 @@ public class Carrinho implements Serializable {
 	private ItemCompra procurarItemPelaId(final String codigo, Formato formato) {
 
 		for (ItemCompra item : this.itensDeCompra) {
-			if (item.getCodigo().equals(codigo) && item.getFormato().equals(formato)) {
+			if (item.getCodigo().equals(codigo)
+					&& item.getFormato().equals(formato)) {
 				return item;
 			}
 		}
@@ -203,5 +213,24 @@ public class Carrinho implements Serializable {
 		return codigos;
 	}
 
-	
+	public void verificarDisponibilidadeDosItensComRmi() throws Exception {
+		
+		EstoqueRmi estoque = (EstoqueRmi) Naming.lookup("rmi://localhost:1099/estoque");
+		
+		for (ItemCompra itemCompra : this.itensDeCompra) {
+			
+			if (itemCompra.isImpresso()) {
+				
+				System.out.println("Verificação da quantidade de livro: " + itemCompra.getTitulo());
+				
+				ItemEstoque itemEstoque = estoque.getItemEstoque(itemCompra.getCodigo());
+				
+				itemCompra.setQuantidadeNoEstoque(itemEstoque.getQuantidade());
+				
+			}
+			
+		}
+		
+	}
+
 }
