@@ -2,6 +2,13 @@ package br.com.caelum.livraria.jms;
 
 import java.io.Serializable;
 
+import javax.jms.Message;
+import javax.jms.Session;
+import javax.jms.Topic;
+import javax.jms.TopicConnection;
+import javax.jms.TopicConnectionFactory;
+import javax.jms.TopicPublisher;
+import javax.jms.TopicSession;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -20,7 +27,7 @@ public class EnviadorMensagemJms implements Serializable {
 	public void enviar(Pedido pedido) {
 
 		try {
-			/*
+			
 			Context localContext = getContextoLocal();
 			Topic topico = (Topic) localContext.lookup("jms/topico/livraria");
 			TopicConnectionFactory factory = (TopicConnectionFactory) localContext.lookup("jms/ConnectionFactory");
@@ -28,11 +35,17 @@ public class EnviadorMensagemJms implements Serializable {
 			TopicConnection conexao = factory.createTopicConnection();
 			TopicSession session = conexao.createTopicSession(false, Session.AUTO_ACKNOWLEDGE);
 			
-			//crie e envie a mensagem aqui
+			TopicPublisher publisher = session.createPublisher(topico);
+			Message message = session.createTextMessage(pedido.toString());
+			message.setStringProperty("formato", pedido.getFormato());
+			
+			publisher.publish(message);
+			
+			System.out.println("JMS: Enviando pedido:" + pedido);
 			
 			session.close();
 			conexao.close();
-			*/
+			
 			
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
