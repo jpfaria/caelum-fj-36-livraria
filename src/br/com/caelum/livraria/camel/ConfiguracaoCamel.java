@@ -30,12 +30,15 @@ public class ConfiguracaoCamel {
 		context.addRoutes(new RouteBuilder() {
 			@Override
 			public void configure() throws Exception {
-				from("activemq:topic:TOPICO.LIVRARIA").log(LoggingLevel.INFO,
-						"CAMEL: Recebendo MSG ${id}").to(
-						"activemq:queue:FILA.GERADOR");
+				from("activemq:topic:TOPICO.LIVRARIA")
+						.log(LoggingLevel.INFO, "CAMEL: Recebendo MSG ${id}")
+						.filter()
+						.xpath("/pedido/itens/item/formato[text()='EBOOK']")
+						.split().xpath("/pedido/itens")
+						.to("activemq:queue:FILA.GERADOR");
 			}
 		});
-		
+
 		context.start();
 
 	}
