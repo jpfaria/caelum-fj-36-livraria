@@ -5,7 +5,6 @@ import javax.annotation.PreDestroy;
 import javax.jms.ConnectionFactory;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
-import org.apache.activemq.camel.CamelConnection;
 import org.apache.camel.CamelContext;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.builder.RouteBuilder;
@@ -36,7 +35,6 @@ public class ConfiguracaoCamel {
 						"activemq:queue:FILA.GERADOR");
 			}
 		});
-		
 		
 		context.start();
 
